@@ -1,0 +1,23 @@
+= AssetPipelineI18n
+
+asset-pipeline + i18n
+
+In your Gemfile
+
+  group :assets do
+    gem 'asset_pipeline_i18n'
+  end
+
+In your application.rb
+
+  config.assets.localized_precompile = ['application-it.js', 'application-fr.js', 'application-de.js', 'application-en.js']
+
+then
+
+  rake assets:precompile i18n:assets:precompile
+
+Of course you also have to use something like:
+  javascript_include_tag "application-#{I18n.locale}"
+
+Home page: https://github.com/simplificator/asset_pipeline_i18n
+

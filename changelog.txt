@@ -1,0 +1,2 @@
+* version 3.2.5
+it works with rails 3.2.5

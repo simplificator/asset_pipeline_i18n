@@ -9,7 +9,7 @@ Some additional words: you would like to internationalize your javascript/css fi
   alert(<%= I18n.t('javascript.key.name') %>)
 
 That works OK in development mode but with asset pipeline you have only one precompiled and (cached) *application.js* file translated with the default language.
-What you would need is a collection of language specific _application.js_ files, like *application-en.js*, *application-it.js*, etc., this gem is exactly for this.
+What you would need is a collection of language specific _application.js_ files, like *application-en.js*, *application-it.js*, etc. This gem is exactly for that!
 
 == Usage
 
@@ -29,6 +29,13 @@ then
 
 Of course you also have to use something like:
   javascript_include_tag "application-#{I18n.locale}"
+
+== Versioning
+
+The idea is to use the same version number of the Rails version the gem is compatible with. So asset_pipeline_i18n version 3.2.5 is for Rails 3.2.5 and so on.
+If the gem is broken and we have to release a fix, the we will use a forth levelnumber, like 3.2.5.1
+
+== Contacts
 
 Home page: https://github.com/simplificator/asset_pipeline_i18n
 

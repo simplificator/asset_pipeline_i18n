@@ -1,6 +1,17 @@
 = AssetPipelineI18n
 
-asset-pipeline + i18n
+Shortly: asset-pipeline + i18n
+
+Some additional words: you would like to internationalize your javascript/css files the same way you do in the rest of application. For example you would like to write something like:
+
+*app/assets/file.js.erb*
+
+  alert(<%= I18n.t('javascript.key.name') %>)
+
+That works OK in development mode but with asset pipeline you have only one precompiled and (cached) *application.js* file translated with the default language.
+What you would need is a collection of language specific _application.js_ files, like *application-en.js*, *application-it.js*, etc., this gem is exactly for this.
+
+== Usage
 
 In your Gemfile
 

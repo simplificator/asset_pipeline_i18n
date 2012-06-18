@@ -1,2 +1,5 @@
+* version 3.2.6
+should work unchanged with rails 3.2.6
+
 * version 3.2.5
 it works with rails 3.2.5

@@ -33,7 +33,7 @@ Of course you also have to use something like:
 == Versioning
 
 The idea is to use the same version number of the Rails version the gem is compatible with. So asset_pipeline_i18n version 3.2.5 is for Rails 3.2.5 and so on.
-If the gem is broken and we have to release a fix, then we will use a forth levelnumber, like 3.2.5.1
+If the gem is broken and we have to release a fix, then we will use a forth level number, like 3.2.5.1
 To keep things easy, the dependency of the gem if of the form ~> x.x.x, so we assume that it works also with new versions of Rails, until proved otherwise :)
 
 == Contacts

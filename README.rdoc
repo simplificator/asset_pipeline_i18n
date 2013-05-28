@@ -23,12 +23,18 @@ In your application.rb
 
   config.assets.localized_precompile = ['application-it.js', 'application-fr.js', 'application-de.js', 'application-en.js']
 
-then
+then you have to define one appplication-xx.js file for every locale like that:
+
+  //= require application
+
+and of course, in your layout, you also have to use something like:
+
+  javascript_include_tag "application-#{I18n.locale}"
+
+Finally:
 
   rake assets:precompile i18n:assets:precompile
 
-Of course you also have to use something like:
-  javascript_include_tag "application-#{I18n.locale}"
 
 == Versioning
 

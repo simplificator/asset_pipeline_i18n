@@ -37,6 +37,8 @@ Finally:
   
 == Known problems
 
+=== No more require_tree . 
+
 It is no more possible to write
   
   //= require_tree .
@@ -45,6 +47,11 @@ in appplication.js because this will create a circular dependency now. One easy 
 in a subdirectory (e.g. lib) and then:
 
   //= require_tree ./lib
+  
+=== No proper i18n in development mode  
+  
+This gem is intended for compile translated assets for production environment.
+Unfortunately it doesn not provide proper translations when running in development environment due to assets caching.
 
 == Versioning
 

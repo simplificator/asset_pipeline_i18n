@@ -23,7 +23,7 @@ In your application.rb
 
   config.assets.localized_precompile = ['application-it.js', 'application-fr.js', 'application-de.js', 'application-en.js']
 
-then you have to define one appplication-xx.js file for every locale like that:
+then you have to define one application-xx.js file for every locale like that:
 
   //= require application
 
@@ -34,7 +34,17 @@ and of course, in your layout, you also have to use something like:
 Finally:
 
   rake assets:precompile i18n:assets:precompile
+  
+== Known problems
 
+It is no more possible to write
+  
+  //= require_tree .
+  
+in appplication.js because this will create a circular dependency now. One easy workaround is to move all the js files 
+in a subdirectory (e.g. lib) and then:
+
+  //= require_tree ./lib
 
 == Versioning
 

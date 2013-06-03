@@ -35,9 +35,11 @@ Finally:
 
   rake assets:precompile i18n:assets:precompile
   
+Sample application: https://github.com/pic/rails_asset_pipeline_i18n (thanks to Morgan Hallgren)
+
 == Known problems
 
-=== No more require_tree . 
+=== Remove "require_tree ." 
 
 It is no more possible to write
   
@@ -48,10 +50,10 @@ in a subdirectory (e.g. lib) and then:
 
   //= require_tree ./lib
   
-=== No proper i18n in development mode  
+=== No proper i18n in development environment  
   
-This gem is intended for compile translated assets for production environment.
-Unfortunately it doesn not provide proper translations when running in development environment due to assets caching.
+This gem is intended for compiling translated assets for production environment.
+Unfortunately it does not provide proper translations when running in development environment due to assets caching.
 
 == Versioning
 

@@ -45,7 +45,7 @@ It is no more possible to write
   
   //= require_tree .
   
-in appplication.js because this will create a circular dependency now. One easy workaround is to move all the js files 
+in application.js because this will create a circular dependency now. One easy workaround is to move all the js files 
 in a subdirectory (e.g. lib) and then:
 
   //= require_tree ./lib

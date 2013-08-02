@@ -86,7 +86,7 @@ namespace :i18n do
 
         if config.assets.localized_precompile
           config.assets.localized_precompile.each do |asset|
-            File.open(manifest_path(asset)) do |f|
+            File.open(manifest_path(asset) + "/manifest.yml") do |f|
               localized_manifest = YAML::load(f)
               manifest.merge!(localized_manifest)
             end

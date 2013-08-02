@@ -80,6 +80,8 @@ namespace :i18n do
           warn "Manifest file is missing. Please run standard assets:precompile before i18n:assets:precompile"
           exit 1
         end
+
+        manifest = nil
         File.open(manifest_file) do |f|
           manifest = YAML::load(f)
         end

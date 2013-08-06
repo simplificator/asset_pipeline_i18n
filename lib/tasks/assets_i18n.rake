@@ -70,12 +70,16 @@ namespace :i18n do
         (Rails.configuration.assets.manifest ? Rails.configuration.assets.manifest : File.join(Rails.public_path, Rails.configuration.assets.prefix)) + "/" + localized_asset.match(/([^.]+)/)[1]
       end
 
-      # i18n
-      def merge_manifests
+      def manifest_file
         config = Rails.application.config
         target = File.join(Rails.public_path, config.assets.prefix)
+        config.assets.manifest ? "#{config.assets.manifest}/manifest.yml" : "#{target}/manifest.yml"
+      end
 
-        manifest_file = config.assets.manifest ? "#{config.assets.manifest}/manifest.yml" : "#{target}/manifest.yml"
+      # i18n
+      def merge_manifests
+        puts "Merging all localized manifests into primary manifest..."
+
         unless File.exist?(manifest_file)
           warn "Manifest file is missing. Please run standard assets:precompile before i18n:assets:precompile"
           exit 1
@@ -86,18 +90,23 @@ namespace :i18n do
           manifest = YAML::load(f)
         end
 
-        if config.assets.localized_precompile
-          config.assets.localized_precompile.each do |asset|
-            File.open(manifest_path(asset) + "/manifest.yml") do |f|
-              localized_manifest = YAML::load(f)
-              manifest.merge!(localized_manifest)
-            end
+        Array(Rails.application.config.assets.localized_precompile).each do |asset|
+          File.open(manifest_path(asset) + "/manifest.yml") do |f|
+            localized_manifest = YAML::load(f)
+            manifest.merge!(localized_manifest)
           end
         end
 
         File.open(manifest_file, 'wb') do |f|
           YAML.dump(manifest, f)
         end
+      end
+
+      # i18n
+      def fixup_assets_manifest
+        assets_manifest_path = Rails.root.join("assets_manifest.yml")
+        puts "Copying primary manifest to #{assets_manifest_path}..."
+        FileUtils.cp(manifest_file, assets_manifest_path)
       end
 
       # i18n
@@ -108,6 +117,7 @@ namespace :i18n do
       task :all do
         ruby_rake_task "i18n:assets:precompile:localized"
         merge_manifests
+        fixup_assets_manifest
       end
 
       task :primary => ["assets:environment", "tmp:cache:clear"] do

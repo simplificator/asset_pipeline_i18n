@@ -1,3 +1,7 @@
+* version 3.2.13.1
+- complete rewrite for better performance
+- fixes some known limitations/ bugs
+- no more need to run "rake i18n:assets:precompile", just run "rake assets:precompile" as before
 
 * version 3.2.8
 should work unchanged with rails 3.2.8

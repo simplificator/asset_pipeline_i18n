@@ -1,3 +1,6 @@
+* version 3.2.13.2
+- updated gemspec
+
 * version 3.2.13.1
 - complete rewrite for better performance
 - fixes some known limitations/ bugs

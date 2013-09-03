@@ -1,160 +1,99 @@
-# actionpack-3.2.3/lib/sprockets/assets.rake
-require "fileutils"
-namespace :i18n do
-  namespace :assets do
-    def ruby_rake_task(task, fork = true)
-      env    = ENV['RAILS_ENV'] || 'production'
-      groups = ENV['RAILS_GROUPS'] || 'assets'
-      args   = [$0, task,"RAILS_ENV=#{env}","RAILS_GROUPS=#{groups}"]
-      args << "--trace" if Rake.application.options.trace
-      if $0 =~ /rake\.bat\Z/i
-        Kernel.exec $0, *args
-      else
-        fork ? ruby(*args) : Kernel.exec(FileUtils::RUBY, *args)
+# https://github.com/rails/rails/blob/v3.2.14/actionpack/lib/sprockets/assets.rake
+namespace :assets do
+  namespace :precompile do
+    def internal_precompile(digest = nil)
+      # we have to reinvoke the rask task as we need a clean sprockets env
+      # this sucks, but well, cannot be changed due to design flaws in rails/ sprockets...
+      i18n_assets_grouped_by_locale.keys.each do |locale|
+        ENV['DIGEST'] = digest.nil? ? "true" : "false"
+        ENV['LOCALE'] = locale
+        ruby_rake_task "assets:precompile:localized"
       end
+
+      # merge manifests on second (last) precompile run
+      merge_precompiled_assets if digest == false
     end
 
-    # We are currently running with no explicit bundler group
-    # and/or no explicit environment - we have to reinvoke rake to
-    # execute this task.
-    def invoke_or_reboot_rake_task(task)
-      if ENV['RAILS_GROUPS'].to_s.empty? || ENV['RAILS_ENV'].to_s.empty?
-        ruby_rake_task task
-      else
-        Rake::Task[task].invoke
+    def internal_precompile_i18n(assets, locale, digest = nil)
+      puts "Precompiling assets with locale #{locale}..."
+      I18n.locale = locale
+
+      unless Rails.application.config.assets.enabled
+        warn "Cannot precompile assets if sprockets is disabled. Please set config.assets.enabled to true"
+        exit
       end
+
+      # Ensure that action view is loaded and the appropriate
+      # sprockets hooks get executed
+      _ = ActionView::Base
+
+      config = Rails.application.config
+      config.assets.compile = true
+      config.assets.digest  = digest unless digest.nil?
+      config.assets.digests = {}
+
+      env = Rails.application.assets
+      target = File.join(tmp_path, locale)
+      Sprockets::StaticCompiler.new(env, target, assets, :manifest_path => config.assets.manifest, :digest => config.assets.digest, :manifest => digest.nil?).compile
     end
 
-    desc "Compile all the localized assets named in config.assets.localized_precompile"
-    task :precompile do
-      invoke_or_reboot_rake_task "i18n:assets:precompile:all"
+    def i18n_assets_grouped_by_locale
+      Rails.application.config.assets.localized_precompile.map{ |name| {:name => name, :locale => name.match(/-([a-z]+)\./)[1]} }.group_by{ |v| v[:locale] }.each_value{ |g| g.map!{ |i| i[:name] } }
     end
 
-    namespace :precompile do
-      def internal_localized_precompile(digest = nil)
-        unless Rails.application.config.assets.enabled
-          warn "Cannot precompile assets if sprockets is disabled. Please set config.assets.enabled to true"
-          exit
-        end
+    def precompile_assets(locale, digest)
+      assets = i18n_assets_grouped_by_locale[locale]
+      assets.concat(Rails.application.config.assets.precompile) if I18n.default_locale.to_s == locale
+      internal_precompile_i18n(assets, locale, digest)
+    end
 
-        # Ensure that action view is loaded and the appropriate
-        # sprockets hooks get executed
-        _ = ActionView::Base
+    def manifest_filename
+      Rails.application.config.assets.manifest || "manifest.yml"
+    end
 
-        config = Rails.application.config
-        config.assets.compile = true
-        config.assets.digest  = digest unless digest.nil?
-        config.assets.digests = {}
+    def real_path
+      File.join(Rails.public_path, Rails.application.config.assets.prefix)
+    end
 
-        # changes for i18n
-        env      = Rails.application.assets
-        target   = File.join(Rails.public_path, config.assets.prefix)
+    def tmp_path
+      File.join(real_path, "tmp")
+    end
 
-        asset = ENV['LOCALIZED_ASSET']
-        I18n.locale = manifest_locale(asset)
+    def merge_precompiled_assets
+      puts "Building manifest..."
+      manifest = {}
 
-        compiler = Sprockets::StaticCompiler.new(env,
-                                                 target,
-                                                 [asset], # i18n change
-                                                 :manifest_path => manifest_path(asset), # i18n change
-                                                 :digest => config.assets.digest,
-                                                 :manifest => digest.nil?)
-        compiler.compile
-      end
+      i18n_assets_grouped_by_locale.keys.each do |locale|
+        root_path = File.join(tmp_path, locale)
+        Dir[File.join(root_path, *(["/**"]*10))].each do |src_path|
+          dst_path = File.join(real_path, src_path[(root_path.length + 1)..-1])
 
-      def manifest_locale(localized_asset)
-        localized_asset.match(/-([^.]+)/)[1]
-      end
-
-      def manifest_path(localized_asset)
-        (Rails.configuration.assets.manifest ? Rails.configuration.assets.manifest : File.join(Rails.public_path, Rails.configuration.assets.prefix)) + "/" + localized_asset.match(/([^.]+)/)[1]
-      end
-
-      def manifest_file
-        config = Rails.application.config
-        target = File.join(Rails.public_path, config.assets.prefix)
-        config.assets.manifest ? "#{config.assets.manifest}/manifest.yml" : "#{target}/manifest.yml"
-      end
-
-      # i18n
-      def merge_manifests
-        puts "Merging all localized manifests into primary manifest..."
-
-        unless File.exist?(manifest_file)
-          warn "Manifest file is missing. Please run standard assets:precompile before i18n:assets:precompile"
-          exit 1
-        end
-
-        manifest = nil
-        File.open(manifest_file) do |f|
-          manifest = YAML::load(f)
-        end
-
-        Array(Rails.application.config.assets.localized_precompile).each do |asset|
-          File.open(manifest_path(asset) + "/manifest.yml") do |f|
-            localized_manifest = YAML::load(f)
-            manifest.merge!(localized_manifest)
+          name = File.basename(src_path)
+          folder = File.dirname(src_path)
+          if name == manifest_filename
+            File.open(src_path, "rb") do |f|
+              manifest.merge!(YAML::load(f))
+            end
+            next
           end
-        end
 
-        File.open(manifest_file, 'wb') do |f|
-          YAML.dump(manifest, f)
-        end
-      end
-
-      # i18n
-      def fixup_assets_manifest
-        assets_manifest_path = Rails.root.join("assets_manifest.yml")
-        puts "Copying primary manifest to #{assets_manifest_path}..."
-        FileUtils.cp(manifest_file, assets_manifest_path)
-      end
-
-      # i18n
-      task :merge_manifests do
-        merge_manifests
-      end
-
-      task :all do
-        ruby_rake_task "i18n:assets:precompile:localized"
-        merge_manifests
-        fixup_assets_manifest
-      end
-
-      task :primary => ["assets:environment", "tmp:cache:clear"] do
-        internal_precompile
-      end
-
-      task :nondigest => ["assets:environment", "tmp:cache:clear"] do
-        internal_precompile(false)
-      end
-
-      # i18n
-      task :localized do
-        config = Rails.application.config
-        if config.assets.localized_precompile
-          config.assets.localized_precompile.each do |asset|
-            puts "Invoking assets precompile task for localized asset #{asset}..."
-            ENV['LOCALIZED_ASSET'] = asset
-            ruby_rake_task "i18n:assets:precompile:localized_asset"
+          if File.directory?(src_path)
+            FileUtils.mkdir(dst_path) unless File.exists?(dst_path)
+          else
+            FileUtils.cp(src_path, dst_path)
           end
         end
       end
 
-      # i18n
-      task :localized_asset do
-        Rake::Task["i18n:assets:precompile:localized_primary"].invoke
-        ruby_rake_task("i18n:assets:precompile:localized_nondigest", false) if Rails.application.config.assets.digest
+      File.open(File.join(real_path, manifest_filename), "wb") do |f|
+        YAML.dump(manifest, f)
       end
 
-      # i18n
-      task :localized_primary => ["assets:environment", "tmp:cache:clear"] do
-        internal_localized_precompile
-      end
+      FileUtils.rm_r(tmp_path)
+    end
 
-      # i18n
-      task :localized_nondigest => ["assets:environment", "tmp:cache:clear"] do
-        internal_localized_precompile(false)
-      end
+    task :localized => ["assets:environment", "tmp:cache:clear"] do
+      precompile_assets(ENV['LOCALE'], (ENV['DIGEST'] == "true") ? nil : false)
     end
   end
 end

@@ -19,5 +19,5 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # specify any dependencies here; for example:
-  s.add_runtime_dependency "rails", "~> 3.2.13"
+  s.add_runtime_dependency "rails", "~> 4.0.1"
 end

@@ -1,3 +1,3 @@
 module AssetPipelineI18n
-  VERSION = "3.2.13.2"
+  VERSION = "4.0.1.0"
 end

@@ -13,29 +13,29 @@ What you would need is a collection of language specific _application.js_ files,
 
 == Usage
 
-In your Gemfile
+If not already done, define all locales your application uses in an initializer:
 
-  group :assets do
-    gem 'asset_pipeline_i18n'
-  end
+  I18n.available_locales = %w(de it en fr)
 
-In your application.rb
+Add the gem to your Gemfile:
 
-  config.assets.localized_precompile = ['application-it.js', 'application-fr.js', 'application-de.js', 'application-en.js']
+  gem 'asset_pipeline_i18n'
 
-then you have to define one application-xx.js file for every locale like that:
+In your application.rb add:
+
+  config.localized_assets = ["application-%{locale}.js"]
+
+Now define all the application-xx.js files for every locale like that:
 
   //= require application
 
-and of course, in your layout, you also have to use something like:
+And of course, in your layout, you also have to use something like:
 
   javascript_include_tag "application-#{I18n.locale}"
 
 Finally:
 
   rake assets:precompile
-
-Sample application: https://github.com/pic/rails_asset_pipeline_i18n (thanks to Morgan Hallgren)
 
 == Known problems
 

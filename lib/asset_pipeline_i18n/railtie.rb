@@ -23,7 +23,7 @@ module AssetPipelineI18n
                 Rails.logger.info "Compiling assets for locale #{locale}..."
                 I18n.locale = locale
                 with_logger do
-                  clean_cache
+                  fixup_cache
                   manifest.compile(assets)
                 end
               end
@@ -38,13 +38,10 @@ module AssetPipelineI18n
         # new methods for better code structure on our side
         #
 
-        def t.clean_cache
+        def t.fixup_cache
           env = manifest.environment
-          def env.expire_index!
-            @assets.clear
-          end
-          manifest.environment.send(:expire_index!)
-          rm_rf(cache_path)
+          env.cache.instance_variable_set("@root", Rails.root.join("tmp", "cache", "assets", "#{Rails.env}-#{I18n.locale}"))
+          manifest.environment.instance_variable_get("@assets").clear
         end
       end
     end
